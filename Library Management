@@ -1,0 +1,54 @@
+from flask import Flask, render_template, request, redirect, url_for
+
+app = Flask(__name__)
+
+# Library system data
+available_books = [
+    "Python Crash Course", "Data Structures in Java", "C Programming", "Blockchain Basics", 
+    "Artificial Intelligence", "Clean Code", "The Pragmatic Programmer", "Design Patterns", 
+    "JavaScript: The Good Parts", "Machine Learning with Python", "Algorithms Unlocked", 
+    "Web Development with React", "Computer Networks", "Operating Systems"
+]
+lent_books = {}
+
+# Home page
+@app.route('/')
+def index():
+    return render_template('index.html', available_books=available_books, lent_books=lent_books)
+
+# Borrow a book
+@app.route('/borrow', methods=['POST'])
+def borrow():
+    user_name = request.form['name']
+    book_name = request.form['book']
+    if book_name in available_books:
+        available_books.remove(book_name)
+        lent_books[book_name] = user_name
+        return redirect(url_for('index'))
+    else:
+        return f"Sorry, '{book_name}' is unavailable or already lent."
+
+# Return a book
+@app.route('/return', methods=['POST'])
+def return_book():
+    user_name = request.form['name']
+    book_name = request.form['book']
+    if book_name in lent_books and lent_books[book_name] == user_name:
+        available_books.append(book_name)
+        del lent_books[book_name]
+        return redirect(url_for('index'))
+    else:
+        return f"'{book_name}' was not borrowed by {user_name}."
+
+# Add a new book
+@app.route('/add', methods=['POST'])
+def add_book():
+    book_name = request.form['book']
+    if book_name not in available_books and book_name not in lent_books:
+        available_books.append(book_name)
+        return redirect(url_for('index'))
+    else:
+        return f"'{book_name}' already exists in the library."
+
+if __name__ == "__main__":
+    app.run(debug=True)
